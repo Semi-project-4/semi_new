@@ -27,7 +27,7 @@
 
 # ### 1. 데이터 불러오기
 
-# In[140]:
+# In[2]:
 
 
 import pandas as pd
@@ -38,13 +38,13 @@ test = pd.read_csv('../../데이터/test.csv')
 
 # ### 2. 데이터 확인
 
-# In[141]:
+# In[3]:
 
 
 train.head()
 
 
-# In[142]:
+# In[4]:
 
 
 test.head()
@@ -52,13 +52,13 @@ test.head()
 
 # ### 3. 수치형 데이터와 범주형 데이터로 나누기
 
-# In[143]:
+# In[5]:
 
 
 train.info()
 
 
-# In[144]:
+# In[6]:
 
 
 numeric_feature = ['subscription_duration', 'recent_login_time',
@@ -69,13 +69,13 @@ numeric_feature = ['subscription_duration', 'recent_login_time',
 categorical_feature = ['preferred_difficulty_level','subscription_type','payment_pattern']
 
 
-# In[145]:
+# In[7]:
 
 
 train[numeric_feature].describe()
 
 
-# In[146]:
+# In[8]:
 
 
 for col in categorical_feature:
@@ -84,7 +84,7 @@ for col in categorical_feature:
 
 # ### 4. 데이터 시각화
 
-# In[147]:
+# In[9]:
 
 
 import matplotlib.pyplot as plt
@@ -93,7 +93,7 @@ import seaborn as sns
 
 # #### 4-1. Target 데이터 갯수
 
-# In[148]:
+# In[10]:
 
 
 target_count = train['target'].value_counts().sort_index()
@@ -107,7 +107,7 @@ plt.show()
 
 # #### 4-2. 수치형 데이터 분포
 
-# In[149]:
+# In[11]:
 
 
 numeric_train = train[numeric_feature]
@@ -121,7 +121,7 @@ plt.tight_layout(rect=[0, 0, 1, 1])
 plt.show()
 
 
-# In[150]:
+# In[12]:
 
 
 plt.figure(figsize=(10,8))
@@ -133,7 +133,7 @@ plt.show()
 
 # #### 4-3. 범주형 변수 분포
 
-# In[151]:
+# In[13]:
 
 
 def compare_categorical_data(df, col):    
@@ -165,7 +165,7 @@ for col in categorical_feature:
 
 # #### 5-1. 이상치 제거
 
-# In[152]:
+# In[14]:
 
 
 def replace_outliers(df, col):
@@ -188,7 +188,7 @@ train.reset_index(drop=True, inplace=True)
 
 # #### 5-2. 라벨 인코딩 
 
-# In[153]:
+# In[15]:
 
 
 def transfer_level_data(x):
@@ -203,7 +203,7 @@ train['preferred_difficulty_level'] = train['preferred_difficulty_level'].apply(
 test['preferred_difficulty_level'] = test['preferred_difficulty_level'].apply(transfer_level_data)
 
 
-# In[154]:
+# In[16]:
 
 
 train['subscription_type'] = train['subscription_type'].apply(lambda x: 1 if x == 'Premium' else 0)
@@ -212,7 +212,7 @@ test['subscription_type'] = test['subscription_type'].apply(lambda x: 1 if x == 
 
 # #### 5-3. 원핫인코딩
 
-# In[155]:
+# In[17]:
 
 
 from sklearn.preprocessing import OneHotEncoder
@@ -234,7 +234,7 @@ test = pd.concat([test, encoded_df], axis=1)
 
 # #### 5-4. 스케일링
 
-# In[156]:
+# In[18]:
 
 
 from sklearn.preprocessing import MinMaxScaler
@@ -247,23 +247,23 @@ for col in numeric_feature:
 
 # ### 6. 모델링
 
-# In[157]:
+# In[19]:
 
 
 from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score
 from sklearn.model_selection import train_test_split
-import lightgbm as lgb
+from lightgbm import LGBMClassifier
 
 x = train.drop(columns=['user_id','target'])
 y = train['target']
 x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=0.3, random_state=12)
 
-model =lgb.LGBMClassifier(n_estimators=50, force_row_wise=True,learning_rate=0.01, verbose=0)
+model =LGBMClassifier(n_estimators=50, force_row_wise=True,learning_rate=0.01, verbose=0)
 model.fit(x_train, y_train)
 pred = model.predict(x_test)
 
 
-# In[168]:
+# In[20]:
 
 
 result = pd.DataFrame(columns=['Accuracy', 'Precision', 'Recall', 'F1-Score'])
@@ -272,6 +272,108 @@ result.loc['LightGBM'] = [accuracy_score(y_test, pred), precision_score(y_test, 
                  recall_score(y_test, pred), f1_score(y_test, pred)]
 
 result
+
+
+# In[25]:
+
+
+import optuna
+from lightgbm import LGBMClassifier
+
+def objective(trial, X_train, X_val, y_train, y_val):
+    
+    # optuna를 이용한 하이퍼 파라미터 조정
+    num_leaves = trial.suggest_int('num_leaves', 20, 3000, log=True)
+    max_depth = trial.suggest_int('max_depth', 3, 10)
+    learning_rate = trial.suggest_float('learning_rate', 0.01, 0.5)
+    subsample = trial.suggest_float('subsample', 0.5, 1.0)
+    colsample_bytree = trial.suggest_float('colsample_bytree', 0.5, 1.0)
+    
+
+    # 모델 생성 및 훈련
+    model = LGBMClassifier(
+        learning_rate=learning_rate,
+        max_depth=max_depth,
+        subsample=subsample,
+        colsample_bytree=colsample_bytree,
+        num_leaves=num_leaves,
+        random_state=42
+    )
+    model.fit(X_train, y_train)
+
+    # 검증 세트에서의 성능 평가
+    pred = model.predict(X_val)
+    accuracy = accuracy_score(y_val, pred)
+    return accuracy
+
+study = optuna.create_study(direction='maximize')
+study.optimize(lambda trial: objective(trial, x_train, x_test, y_train, y_test), n_trials=10, n_jobs=-1)
+
+result_score = study.best_trial.values[0]
+result_score
+
+
+# ### 7. 구독 유형 추천
+
+# #### 7-1. 방법
+# 
+# 구독 유형을 종속변수로 설정하고 다른 컬럼들을 독립변수로 사용
+
+# In[32]:
+
+
+x = train.drop(columns=['user_id','subscription_type'])
+y = train['subscription_type']
+
+x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=0.3, random_state=12)
+
+model =LGBMClassifier(n_estimators=50, force_row_wise=True,learning_rate=0.01, verbose=0)
+model.fit(x_train, y_train)
+pred = model.predict(x_test)
+
+
+result = pd.DataFrame(columns=['Accuracy', 'Precision', 'Recall', 'F1-Score'])
+
+result.loc['LightGBM'] = [accuracy_score(y_test, pred), precision_score(y_test, pred), 
+                 recall_score(y_test, pred), f1_score(y_test, pred)]
+
+result
+
+
+# In[33]:
+
+
+def objective(trial, X_train, X_val, y_train, y_val):
+    
+    # optuna를 이용한 하이퍼 파라미터 조정
+    num_leaves = trial.suggest_int('num_leaves', 20, 3000, log=True)
+    max_depth = trial.suggest_int('max_depth', 3, 10)
+    learning_rate = trial.suggest_float('learning_rate', 0.01, 0.5)
+    subsample = trial.suggest_float('subsample', 0.5, 1.0)
+    colsample_bytree = trial.suggest_float('colsample_bytree', 0.5, 1.0)
+    
+
+    # 모델 생성 및 훈련
+    model = LGBMClassifier(
+        learning_rate=learning_rate,
+        max_depth=max_depth,
+        subsample=subsample,
+        colsample_bytree=colsample_bytree,
+        num_leaves=num_leaves,
+        random_state=42
+    )
+    model.fit(X_train, y_train)
+
+    # 검증 세트에서의 성능 평가
+    pred = model.predict(X_val)
+    accuracy = accuracy_score(y_val, pred)
+    return accuracy
+
+study = optuna.create_study(direction='maximize')
+study.optimize(lambda trial: objective(trial, x_train, x_test, y_train, y_test), n_trials=10, n_jobs=-1)
+
+result_score = study.best_trial.values[0]
+result_score
 
 
 # In[ ]:
