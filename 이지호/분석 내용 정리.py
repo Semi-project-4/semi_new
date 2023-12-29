@@ -19,8 +19,8 @@
 import pandas as pd
 import numpy as np
 
-train_origin = pd.read_csv('train.csv')
-test_origin = pd.read_csv('test.csv')
+train_origin = pd.read_csv('../데이터/train.csv')
+test_origin = pd.read_csv('../데이터/test.csv')
 
 
 # ### 2. 사용 데이터를 카피
@@ -281,6 +281,18 @@ plt.show()
 # In[17]:
 
 
+#  제곱근, 세제곱근 연산을 통한 분산 줄이기 (이상치 제거)
+# for col in outlier_columns:
+#     train_transfered[col+'_root'] = train[col].apply(lambda x: np.sqrt(x))
+#     test_transfered[col+'_root'] = test[col].apply(lambda x: np.sqrt(x))
+    
+#     train_transfered[col+'_root3'] = train[col].apply(lambda x: x ** (1/3))
+#     test_transfered[col+'_root3'] = test[col].apply(lambda x: x ** (1/3))
+
+
+# In[18]:
+
+
 # 이상치 제거 함수
 def replace_outliers(df, col):
     Q1 = df[col].quantile(0.25)
@@ -304,7 +316,7 @@ for col in outlier_columns:
 
 # ### 2. 스케일링
 
-# In[18]:
+# In[19]:
 
 
 from sklearn.preprocessing import MinMaxScaler
@@ -315,14 +327,14 @@ for col in numerical_cols:
     test[col] = scaler.transform(test[col].values.reshape(-1,1))
 
 
-# In[19]:
+# In[20]:
 
 
 # 데이터 확인
 train
 
 
-# In[20]:
+# In[21]:
 
 
 # 데이터 확인
@@ -334,7 +346,7 @@ test
 # ### 3-1) 구독이탈예측 검증데이터 분리
 # 제공되는 test.csv에는 'target' column이 존재하지 않는다. 따라서 학습 데이터를 예측의 정확도를 판별하기 위해 사용한다.
 
-# In[21]:
+# In[22]:
 
 
 from sklearn.model_selection import train_test_split
@@ -348,7 +360,7 @@ x_train, x_val, y_train, y_val = train_test_split(x, y, test_size=0.2, random_st
 
 # ### 3-2) 구독유형추천 검증데이터 분리
 
-# In[22]:
+# In[23]:
 
 
 X = train.drop(['target', 'subscription_type'], axis=1)
@@ -360,7 +372,7 @@ X_train, X_val, Y_train, Y_val = train_test_split(X, Y, test_size=0.5, random_st
 
 # ## - 분석 모델링
 
-# In[23]:
+# In[24]:
 
 
 from sklearn.metrics import accuracy_score, precision_score, recall_score, roc_auc_score, roc_curve, f1_score, confusion_matrix, classification_report, make_scorer
@@ -371,7 +383,7 @@ from optuna.integration import OptunaSearchCV
 
 # ### 1. DT
 
-# In[24]:
+# In[25]:
 
 
 from sklearn.tree import DecisionTreeClassifier
@@ -394,7 +406,7 @@ Best_dt = {'random_state': 12, 'max_depth': 10, 'min_samples_leaf':4}
 
 # ### 2. KNN
 
-# In[25]:
+# In[26]:
 
 
 from sklearn.neighbors import KNeighborsClassifier
@@ -443,7 +455,7 @@ print(f'KNN - 구독 유형 추천 최적 파라미터의 정확도:{Study.best_
 
 # ### 3. XGboost
 
-# In[26]:
+# In[27]:
 
 
 from xgboost import XGBClassifier
@@ -464,7 +476,7 @@ def model_xgb(x,y):
     return [grid_search.best_params_, grid_search.best_score_]
 
 
-# In[27]:
+# In[28]:
 
 
 # XGboost fitting은 시간이 오래 걸렸으므로 결과만 따로 불러와 사용하도록 함.
@@ -499,7 +511,7 @@ print("XGboost - 구독 유형 추천 최적 파라미터의 정확도:0.7695")
 
 # ### 4. LightGBM
 
-# In[28]:
+# In[29]:
 
 
 from lightgbm import LGBMClassifier
@@ -553,7 +565,7 @@ print(f'LightGBM - 구독 유형 추천 최적 파라미터의 정확도:{Study.
 
 # ### 0. 예측 결과 확인 함수
 
-# In[29]:
+# In[30]:
 
 
 best_params_list = [best_dt, best_knn, best_xgb, best_lgbm]
@@ -568,7 +580,7 @@ def filter_params(model_class, params):
 
 # ### 1. 구독 해지 예측
 
-# In[30]:
+# In[31]:
 
 
 for i, param in enumerate(best_params_list):
@@ -598,7 +610,7 @@ for i, param in enumerate(best_params_list):
 
 # ### 2. 구독 유형 추천
 
-# In[31]:
+# In[32]:
 
 
 for i, param in enumerate(best_params_list):
