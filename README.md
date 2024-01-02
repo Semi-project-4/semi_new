@@ -4,9 +4,8 @@
 </details>
 
 ## 0. 분석 내용 정리 파일
-- [ipynb파일](/이지호/분석%20내용%20정리.ipynb)
 - [py파일](/이지호/분석%20내용%20정리.py)
-- [PPT](/PPT/Pro_Master(1).pptx)
+- [PPT](/PPT/Pro_Master(1).pdf)
 
 ## 1. Intro
 ### - 목적
