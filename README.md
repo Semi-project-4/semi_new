@@ -3,6 +3,11 @@
 
 </details>
 
+## 0. 분석 내용 정리 파일
+- [ipynb파일](/이지호/분석%20내용%20정리.ipynb)
+- [py파일](/이지호/분석%20내용%20정리.py)
+- [PPT](/PPT/Pro_Master(1).pptx)
+
 ## 1. Intro
 ### - 목적
 해당 프로젝트는 교육 수강생들의 '구독 기간', '로그인 활동', '학습 세션 참여도'와 같은 데이터 분석을 통해 이들이 서비스 구독을 계속할지 예측하고, 구독 유형을 추천하는 AI 알고리즘을 개발하는 것을 목표로 한다. 프로젝트는 4인으로 구성된 팀을 이루어 협업을 경험하고, 각각 다른 머신러닝 알고리즘을 사용하여 이를 공유하여 insight를 넓히는 방향으로 진행한다. 
@@ -29,7 +34,7 @@ DACON에서 주관한 ['해커톤 37회 학습 플랫폼 이용자 구독 갱신
 ### - 데이터 구분
 
 <details>
-<summary>Column</summary>
+<summary>Column 내용</summary>
 <div markdown="1">
 
 - user_id: 사용자의 고유 식별자  
@@ -58,25 +63,61 @@ DACON에서 주관한 ['해커톤 37회 학습 플랫폼 이용자 구독 갱신
 </div>
 </details>  
 
-### - 데이터 인코딩
-
+### - [데이터 인코딩](/code/Data_Cleaning.ipynb)
+dtype이 'object'인 columns를 label encoding 해주고, 범주형 데이터인 'payment_pattern'을 OneHot encoding해준다.  
 
 
 ## 3. 데이터 분석
 
 ### - EDA
 
-### - 데이터 전처리
+- 수치형 데이터의 시각화  
+왜도가 높은 columns는 이상치가 있을 것으로 예측된다.
+![컬럼들의 분포도](/image/outlier.JPG)
+
+- target과 각 columns와의 상관관계 히트맵  
+![구독해지 corr](/image/corr_target.png)
+
+- subscription_type과 각 columns와의 상관관계 히트맵
+![구독유형 corr](/image/corr_subscription.png)
+
+
+
+### - [데이터 전처리](/이지호/분석%20내용%20정리.py)
+1) 이상치 제거  
+Smote 등을 통하여 데이터를 늘리자는 제안과 편차를 줄이기 위해 값을 제곱근 하자는 방안이 나왔으나, 보편적인 방법인 사분위방법을 사용하여 이상치 제거를 하였다.  
+
+2) 스케일링
+종속변수간 범위 크기가 상이한 상태여서 KNN 알고리즘 적용할 경우, 정확도가 좋지 않을 수도 있다. 또한 추후에 앙상블 기법 적용하는 것을 고려하여 스케일링 진행하였다.
 
 ### - 모델링
+1) [DT](/전원영/Decision_Tree_Plus.ipynb)
+2) [KNN](/한동현/)
+3) [XGBoost](/김민주/XGBoost연습ver1.ipynb)
+4) [LightGBM](/이지호/LightGBM.py)
 
 ### 모델링 평가
+1) 구독 해지 예측  
+- 구독해지예측 분류리포트
+![구독해지예측 분류리포트](/image/accuracy_target.JPG)
+- 구독해지예측 혼동행렬
+![구독해지예측 혼동행렬](/image/confusion_matrix_target.JPG)
+
+2) 구독 유형 추천  
+- 구독해지예측 분류리포트
+![구독유형추천 분류리포트](/image/accuracy_subscription.JPG)
+- 구독해지예측 혼동행렬
+![구독유형추천 혼동행렬](/image/confusion_matrix_subscription.JPG)
 
 ## 4. 결론
 
 ### - 프로젝트 개선점
 
+![프로젝트 개선점](/image/Improvements.JPG)
+
 ### - 프로젝트 평가
+
+![프로젝트 평가](/image/evaluation.JPG)
 
 
 
